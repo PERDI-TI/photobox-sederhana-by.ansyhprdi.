@@ -38,8 +38,7 @@ button, select, input{
    box-shadow: 0 0 20px rgb(231, 247, 5);
 }
 .form {
-    width: 600px;
-    padding: 0 20px;
+    width: auto;
 }
 
 .form input {
@@ -104,4 +103,5 @@ h3{
 }
 .actions button{
     font-size: 18px;
+
 }
