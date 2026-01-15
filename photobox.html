@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Camera Photo Box</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="web">
+    <h1>SELAMAT DATANG DI PHOTOBOX SAYA</h1>
+    <p>Silahkan foto sesuai dengan selera anda.</p>
+  </div>
+
+  <h2 id="counter">Take Photos (0/3)</h2>
+
+  <div class="camera-box">
+    <video id="video" autoplay playsinline></video>
+  </div>
+
+  <div class="controls">
+    <button onclick="switchCamera()"> Kamera</button>
+    <button onclick="toggleMirror()">Mirror</button>
+
+    <select id="filter">
+      <option value="none">Normal</option>
+      <option value="grayscale(100%)">Grayscale</option>
+      <option value="sepia(100%)">Sepia</option>
+      <option value="blur(2px)">Blur</option>
+    </select>
+
+    <input type="color" id="borderColor" title="Warna Tepi">
+
+    <select id="limit">
+      <option value="3">3x</option>
+      <option value="4">4x</option>
+    </select>
+    <div class="form">
+      <input type="text" id="nameInput" placeholder="Nama">
+      <input type="text" id="messageInput" placeholder="Pesan">
+    </div>
+    <button class="capture" onclick="capturePhoto()">📸 Capture</button>
+  </div>
+
+
+
+  <canvas id="canvas"></canvas> </canvas>
+
+  <h3>SIMPAN GALERY</h3>
+  <div class="gallery" id="gallery"></div>
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const gallery = document.getElementById("gallery");
+    const counter = document.getElementById("counter");
+
+    const filterSelect = document.getElementById("filter");
+    const borderInput = document.getElementById("borderColor");
+    const nameInput = document.getElementById("nameInput");
+    const messageInput = document.getElementById("messageInput");
+    const limitSelect = document.getElementById("limit");
+
+    let facingMode = "user";
+    let mirror = true;
+    let photos = JSON.parse(localStorage.getItem("photos")) || [];
+    // KAMERA
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode }
+      })
+        .then(stream => video.srcObject = stream)
+        .catch(() => alert("Kamera tidak bisa diakses"));
+    }
+    startCamera();
+
+    // SWITCH KAMERA
+    function switchCamera() {
+      facingMode = facingMode === "user" ? "environment" : "user";
+      mirror = facingMode === "user";
+      video.classList.toggle("mirror", mirror);
+      startCamera();
+    }
+
+    // MIRROR
+    function toggleMirror() {
+      mirror = !mirror;
+      video.classList.toggle("mirror", mirror);
+    }
+
+    // FILTER LIVE
+    filterSelect.addEventListener("change", () => {
+      video.style.filter = filterSelect.value;
+    });
+
+
+    // CAPTURE FOTO
+
+    function capturePhoto() {
+      const limit = parseInt(limitSelect.value);
+      if (photos.length >= limit) {
+        alert("Limit foto tercapai!");
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.filter = filterSelect.value;
+
+      if (mirror) {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+
+      ctx.drawImage(video, 0, 0);
+
+      const data = {
+        img: canvas.toDataURL("image/png"),
+        name: nameInput.value || "Tanpa Nama",
+        message: messageInput.value || "-",
+        time: new Date().toLocaleString(),
+        filter: filterSelect.value,
+        border: borderInput.value
+      };
+
+      photos.push(data);
+      savePhotos();
+      renderGallery();
+      updateCounter();
+    }
+
+    // SIMPAN
+    function savePhotos() {
+      localStorage.setItem("photos", JSON.stringify(photos));
+    }
+
+    // HAPUS FOTO
+    function deletePhoto(index) {
+      photos.splice(index, 1);
+      savePhotos();
+      renderGallery();
+      updateCounter();
+    }
+
+    // EDIT FOTO
+    function editPhoto(index) {
+      const newName = prompt("Edit Nama:", photos[index].name);
+      const newMessage = prompt("Edit Pesan:", photos[index].message);
+      const newBorder = prompt("Edit Warna Border:", photos[index].border);
+
+      if (newName !== null) photos[index].name = newName;
+      if (newMessage !== null) photos[index].message = newMessage;
+      if (newBorder !== null) photos[index].border = newBorder;
+
+      savePhotos();
+      renderGallery();
+    }
+    // GALERI
+    function renderGallery() {
+      gallery.innerHTML = "";
+      photos.forEach((p, i) => {
+        const box = document.createElement("div");
+        box.className = "photo-box";
+        box.style.border = `4px solid ${p.border}`;
+
+        box.innerHTML = `
+      <img src="${p.img}" style="filter:${p.filter}">
+      <div class="photo-info">
+        <strong>${p.name}</strong><br>
+        ${p.message}<br>
+        <small>${p.time}</small>
+      </div>
+      <div class="actions">
+        <button onclick="editPhoto(${i})">✏️ Edit</button>
+        <button onclick="deletePhoto(${i})">🗑️ Hapus</button>
+      </div>
+    `;
+        gallery.appendChild(box);
+      });
+    }
+
+    // COUNTER
+    function updateCounter() {
+      const limit = limitSelect.value;
+      counter.innerText = `Take Photos (${photos.length}/${limit})`;
+    }
+
+    renderGallery();
+    updateCounter();
+
+  </script>
+
+</body>
+
+</html>
