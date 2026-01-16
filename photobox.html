@@ -23,6 +23,12 @@
     <button onclick="switchCamera()"> Kamera</button>
     <button onclick="toggleMirror()">Mirror</button>
 
+    <select id="photoTimer">
+      <option value="0">Timer Off</option>
+      <option value="3">3 Second</option>
+      <option value="5">5 Second</option>
+    </select>
+    
     <select id="filter">
       <option value="none">Normal</option>
       <option value="grayscale(100%)">Grayscale</option>
@@ -87,15 +93,36 @@
       mirror = !mirror;
       video.classList.toggle("mirror", mirror);
     }
+    
+    // TIMER FOTO 
+    const timerSelect = document.getElementById("photoTimer");
+    // backup fungsi capture lama
+    const originalCapture = capturePhoto;
+    // override TANPA mengubah isi kode lama
+    capturePhoto = function () {
+      const delay = parseInt(timerSelect.value || 0);
+      if (delay > 0) {
+        let count = delay;
+        const countdown = setInterval(() => {
+          counter.innerText = `Foto diambil dalam ${count}s`;
+          count--;
+          if (count < 0) {
+            clearInterval(countdown);
+            updateCounter();
+            originalCapture();
+          }
+        }, 1000);
+      } else {
+        originalCapture();
+      }
+    };
 
     // FILTER LIVE
     filterSelect.addEventListener("change", () => {
       video.style.filter = filterSelect.value;
     });
 
-
     // CAPTURE FOTO
-
     function capturePhoto() {
       const limit = parseInt(limitSelect.value);
       if (photos.length >= limit) {
@@ -134,7 +161,15 @@
     function savePhotos() {
       localStorage.setItem("photos", JSON.stringify(photos));
     }
-
+    // DOWNLOAD FOTO
+    function downloadPhoto(imgData) {
+      const a = document.createElement("a");
+      a.href = imgData;
+      a.download = "photo-booth.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
     // HAPUS FOTO
     function deletePhoto(index) {
       photos.splice(index, 1);
@@ -172,6 +207,7 @@
         <small>${p.time}</small>
       </div>
       <div class="actions">
+        <button onclick="downloadPhoto('${p.img}')">⬇️ Download</button>
         <button onclick="editPhoto(${i})">✏️ Edit</button>
         <button onclick="deletePhoto(${i})">🗑️ Hapus</button>
       </div>
@@ -192,5 +228,6 @@
   </script>
 
 </body>
+
 
 </html>
