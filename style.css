@@ -7,7 +7,6 @@ body{
 }
 .camera-box{
     width: auto;
-    height:auto;
     background: radial-gradient(circle at top, rgb(0, 60, 255),red);
     border: 2px solid grey;
     border-radius: 20px;
@@ -89,6 +88,7 @@ h3{
 .photo-box{
     margin: 20px 0;
     border-radius: 20px;
+    height:auto;
     width: auto;
     background: rgb(4, 24, 243);
 }
@@ -107,4 +107,5 @@ h3{
     font-size: 18px;
 
 }
+
 
